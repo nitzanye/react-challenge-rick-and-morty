@@ -1,55 +1,69 @@
-import "./App.css";
-import React, { useEffect, useState } from "react";
-import { characters as charactersRaw } from "./data/characters";
-import { Card } from "./components";
+import './App.css';
+import React, { useEffect, useState } from 'react';
+import { characters as charactersRaw } from './data/characters';
+import { Card, Nav } from './components';
 
 function App() {
   const [filteredCharacters, setFilteredCharacters] = useState([]);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
 
-  useEffect(
-    () => {
-      setTimeout(() => {
-        setFilteredCharacters(charactersRaw);
-      }, 2000);
-    },
-    [
-      /* dependencies */
-    ]
-  );
-  // When dependencies change, useEffect will run again
-  // When empty, useEffect will run only once
+  useEffect(() => {
+    setTimeout(() => {
+      setFilteredCharacters(charactersRaw);
+    }, 2000);
+  }, []);
 
-  const handleInput = (event) => {
-    setSearch(event.target.value); // async
+  const searchCharacter = (searchTerm) => {
+    if (searchTerm === '') return setFilteredCharacters(charactersRaw);
+
+    const filtered = charactersRaw.filter((character) =>
+      character.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredCharacters(filtered);
   };
 
-  const handleSearch = (event) => {
-    event.preventDefault();
+  const removeCharacter = (characterToRemove) => {
+    setFilteredCharacters(
+      filteredCharacters.filter(
+        (character) => character.full_name !== characterToRemove.full_name
+      )
+    );
+  };
 
-    if (search === "") return setFilteredCharacters(charactersRaw);
+  const handleFavorite = (likedCharacter) => {
+    const updatedCharacters = filteredCharacters.map((character) =>
+      character.full_name === likedCharacter.full_name
+        ? { ...character, liked: !character.liked }
+        : character
+    );
 
-    setSearch("");
-
-    const filteredCharacters = charactersRaw.filter((character) => {
-      return character.full_name.toLowerCase().includes(search.toLowerCase());
+    updatedCharacters.sort((a, b) => {
+      if (a.liked === b.liked) return 0;
+      return a.liked ? -1 : 1;
     });
-    setFilteredCharacters(filteredCharacters);
+
+    setFilteredCharacters(updatedCharacters);
   };
 
   return (
     <div className='App'>
-      <nav>
-        <form onSubmit={handleSearch}>
-          <input onChange={handleInput} value={search} />
-          <button type='submit'>Search</button>
-        </form>
-      </nav>
+      <Nav
+        searchCharacter={searchCharacter}
+        setSearch={setSearch}
+        search={search}
+      />
       <section className='main'>
         {filteredCharacters.length === 0 ? (
           <p>Loading...</p>
         ) : (
-          filteredCharacters.map((character) => <Card character={character} />)
+          filteredCharacters.map((character) => (
+            <Card
+              key={character.full_name}
+              character={character}
+              onRemove={removeCharacter}
+              onChange={handleFavorite}
+            />
+          ))
         )}
       </section>
     </div>
